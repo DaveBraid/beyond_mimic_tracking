@@ -1,5 +1,11 @@
 """Script to play a checkpoint if an RL agent from RSL-RL."""
 
+# 可自定本地模型路径，以不使用wandb下载模型，加快速度
+# local_model_path = "logs/rsl_rl/g1_flat/2025-09-26_16-44-32_dance1_subject2_wo_est/model_5000.pt"
+local_motion_file = 'artifacts/dance1_subject2:v0/motion.npz'
+
+# python scripts/rsl_rl/play.py --task=Tracking-Flat-G1-Wo-State-Estimation-v0 --num_envs=2
+
 """Launch Isaac Sim Simulator first."""
 
 import argparse
@@ -108,6 +114,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     else:
         print(f"[INFO] Loading experiment from directory: {log_root_path}")
         resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
+        env_cfg.commands.motion.motion_file = local_motion_file
         print(f"[INFO]: Loading model checkpoint from: {resume_path}")
 
     # create isaac environment
@@ -147,13 +154,13 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     export_motion_policy_as_onnx(
         env.unwrapped,
         ppo_runner.alg.policy,
-        normalizer=ppo_runner.obs_normalizer,
+        normalizer=ppo_runner.alg.policy.actor_obs_normalizer,
         path=export_model_dir,
         filename="policy.onnx",
     )
     attach_onnx_metadata(env.unwrapped, args_cli.wandb_path if args_cli.wandb_path else "none", export_model_dir)
     # reset environment
-    obs, _ = env.get_observations()
+    obs = env.get_observations()
     timestep = 0
     # simulate environment
     while simulation_app.is_running():
@@ -161,6 +168,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         with torch.inference_mode():
             # agent stepping
             actions = policy(obs)
+            # Ensure actions is 2D for vectorized environment
+            if actions.dim() == 1:
+                actions = actions.unsqueeze(0).expand(env.num_envs, -1)
             # env stepping
             obs, _, _, _ = env.step(actions)
         if args_cli.video:
