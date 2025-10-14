@@ -83,6 +83,10 @@ Note: The reference motion should be retargeted and use generalized coordinates 
 
 ```bash
 python scripts/csv_to_npz.py --input_file {motion_name}.csv --input_fps 30 --output_name {motion_name} --headless
+
+# example
+python scripts/csv_to_npz.py --input_file ../Datasets/LAFAN1_Retargeting_Datas
+et/g1/dance1_subject3.csv  --input_fps 30 --output_name dance1_subject3 --headless
 ```
 
 This will automatically upload the processed motion file to the WandB registry with output name {motion_name}.
@@ -91,6 +95,9 @@ This will automatically upload the processed motion file to the WandB registry w
 
 ```bash
 python scripts/replay_npz.py --registry_name={your-organization}-org/wandb-registry-motions/{motion_name}
+
+# example
+python scripts/replay_npz.py --registry_name=ethanlee-hust-org/wandb-registry-motions/dance1_subject2
 ```
 
 - Debugging
@@ -105,6 +112,11 @@ python scripts/replay_npz.py --registry_name={your-organization}-org/wandb-regis
 python scripts/rsl_rl/train.py --task=Tracking-Flat-G1-v0 \
 --registry_name {your-organization}-org/wandb-registry-motions/{motion_name} \
 --headless --logger wandb --log_project_name {project_name} --run_name {run_name}
+
+# example (without estimation)
+python scripts/rsl_rl/train.py --task=Tracking-Flat-G1-Wo-State-Estimation-v0 \
+--registry_name ethanlee-hust-org/wandb-registry-motions/dance1_subject2 \
+--headless --logger wandb --log_project_name BeyondMimic --run_name dance1_subject2_wo_est
 ```
 
 ### Policy Evaluation
@@ -113,6 +125,9 @@ python scripts/rsl_rl/train.py --task=Tracking-Flat-G1-v0 \
 
 ```bash
 python scripts/rsl_rl/play.py --task=Tracking-Flat-G1-v0 --num_envs=2 --wandb_path={wandb-run-path}
+
+# example (local_model)
+python scripts/rsl_rl/play.py --task=Tracking-Flat-G1-Wo-State-Estimation-v0 --num_envs=2
 ```
 
 The WandB run path can be located in the run overview. It follows the format {your_organization}/{project_name}/ along
