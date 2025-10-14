@@ -2,7 +2,7 @@
 
 # 可自定本地模型路径，以不使用wandb下载模型，加快速度
 # local_model_path = "logs/rsl_rl/g1_flat/2025-09-26_16-44-32_dance1_subject2_wo_est/model_5000.pt"
-local_motion_file = 'artifacts/dance1_subject2:v0/motion.npz'
+local_motion_file = 'artifacts/fallAndGetUp2_subject2:v0/motion.npz'
 
 # python scripts/rsl_rl/play.py --task=Tracking-Flat-G1-Wo-State-Estimation-v0 --num_envs=2
 
