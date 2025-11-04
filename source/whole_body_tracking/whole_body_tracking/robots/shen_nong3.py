@@ -4,15 +4,15 @@ from isaaclab.assets.articulation import ArticulationCfg
 
 from whole_body_tracking.assets import ASSET_DIR
 
-ARMATURE_5020 = 0.003609725
-ARMATURE_7520_14 = 0.010177520
-ARMATURE_7520_22 = 0.025101925
-ARMATURE_4010 = 0.00425
+# ARMATURE_5020 = 0.003609725
+# ARMATURE_7520_14 = 0.010177520
+# ARMATURE_7520_22 = 0.025101925
+# ARMATURE_4010 = 0.00425
 
-# ARMATURE_5020 = 0.01
-# ARMATURE_7520_14 = 0.02
-# ARMATURE_7520_22 = 0.02
-# ARMATURE_4010 = 0.02
+ARMATURE_5020 = 0.01
+ARMATURE_7520_14 = 0.02
+ARMATURE_7520_22 = 0.02
+ARMATURE_4010 = 0.02
 
 NATURAL_FREQ = 10 * 2.0 * 3.1415926535  # 10Hz
 DAMPING_RATIO = 2.0
@@ -50,16 +50,16 @@ S3_CYLINDER_CFG = ArticulationCfg(
         ),
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.00, 0.00, 0.20),
-        # pos=(0.00, 0.00, 0.95),
+        pos=(0.00, 0.00, 0.95),  # 用于站立训练
+        # pos=(0.00, 0.00, 0.20),  # 用于起身训练
         # rot=(0.707, 0.00, 0.707, 0.00),  # 面朝下躺在地上，用于训练起身
-        rot=(0.707, 0.00, -0.707, 0.00),  # 面朝上躺在地上，用于训练起身
+        # rot=(0.707, 0.00, -0.707, 0.00),  # 面朝上躺在地上，用于训练起身
         joint_pos={
             ".*_hip_pitch_joint": -0.22,
             ".*_knee_joint": 0.56,
             ".*_foot_pitch_joint": -0.363,
-            "left_shoulder_roll_joint": 1.57,
-            "right_shoulder_roll_joint": -1.57,
+            # "left_shoulder_roll_joint": 1.57,  # 用于起身训练
+            # "right_shoulder_roll_joint": -1.57,  # 用于起身训练
         },
         joint_vel={".*": 0.0},
     ),
@@ -104,7 +104,7 @@ S3_CYLINDER_CFG = ArticulationCfg(
             },
         ),
         "feet": ImplicitActuatorCfg(
-            effort_limit_sim=150.0,
+            effort_limit_sim=300.0,
             velocity_limit_sim=37.0,
             joint_names_expr=[".*_foot_pitch_joint", ".*_foot_roll_joint"],
             stiffness=2.0 * STIFFNESS_5020,
@@ -185,5 +185,4 @@ for a in S3_CYLINDER_CFG.actuators.values():
         s = {n: s for n in names}
     for n in names:
         if n in e and n in s and s[n]:
-            # S3_ACTION_SCALE[n] = 0.25 * e[n] / s[n]
-            S3_ACTION_SCALE[n] = e[n] / s[n]
+            S3_ACTION_SCALE[n] = 0.25 * e[n] / s[n]
