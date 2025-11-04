@@ -9,6 +9,11 @@ ARMATURE_7520_14 = 0.010177520
 ARMATURE_7520_22 = 0.025101925
 ARMATURE_4010 = 0.00425
 
+# ARMATURE_5020 = 0.01
+# ARMATURE_7520_14 = 0.02
+# ARMATURE_7520_22 = 0.02
+# ARMATURE_4010 = 0.02
+
 NATURAL_FREQ = 10 * 2.0 * 3.1415926535  # 10Hz
 DAMPING_RATIO = 2.0
 
@@ -45,17 +50,16 @@ S3_CYLINDER_CFG = ArticulationCfg(
         ),
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.00, 0.00, 0.15),
-        rot=(0.707, 0.00, 0.707, 0.00),  # 面朝下躺在地上，用于训练起身
+        pos=(0.00, 0.00, 0.20),
+        # pos=(0.00, 0.00, 0.95),
+        # rot=(0.707, 0.00, 0.707, 0.00),  # 面朝下躺在地上，用于训练起身
+        rot=(0.707, 0.00, -0.707, 0.00),  # 面朝上躺在地上，用于训练起身
         joint_pos={
             ".*_hip_pitch_joint": -0.22,
             ".*_knee_joint": 0.56,
             ".*_foot_pitch_joint": -0.363,
-            # ".*_elbow_joint": 0.6,
             "left_shoulder_roll_joint": 1.57,
-            # "left_shoulder_pitch_joint": 0.2,
             "right_shoulder_roll_joint": -1.57,
-            # "right_shoulder_pitch_joint": 0.2,
         },
         joint_vel={".*": 0.0},
     ),
@@ -69,10 +73,10 @@ S3_CYLINDER_CFG = ArticulationCfg(
                 ".*_knee_joint",
             ],
             effort_limit_sim={
-                ".*_hip_yaw_joint": 88.0,
-                ".*_hip_roll_joint": 139.0,
-                ".*_hip_pitch_joint": 88.0,
-                ".*_knee_joint": 139.0,
+                ".*_hip_yaw_joint": 300.0,
+                ".*_hip_roll_joint": 300.0,
+                ".*_hip_pitch_joint": 300.0,
+                ".*_knee_joint": 300.0,
             },
             velocity_limit_sim={
                 ".*_hip_yaw_joint": 32.0,
@@ -100,7 +104,7 @@ S3_CYLINDER_CFG = ArticulationCfg(
             },
         ),
         "feet": ImplicitActuatorCfg(
-            effort_limit_sim=50.0,
+            effort_limit_sim=150.0,
             velocity_limit_sim=37.0,
             joint_names_expr=[".*_foot_pitch_joint", ".*_foot_roll_joint"],
             stiffness=2.0 * STIFFNESS_5020,
@@ -132,11 +136,11 @@ S3_CYLINDER_CFG = ArticulationCfg(
                 ".*_hand_joint",
             ],
             effort_limit_sim={
-                ".*_shoulder_pitch_joint": 25.0,
-                ".*_shoulder_roll_joint": 25.0,
-                ".*_shoulder_yaw_joint": 25.0,
-                ".*_elbow_joint": 25.0,
-                ".*_hand_joint": 5.0,
+                ".*_shoulder_pitch_joint": 50.0,
+                ".*_shoulder_roll_joint": 50.0,
+                ".*_shoulder_yaw_joint": 50.0,
+                ".*_elbow_joint": 50.0,
+                ".*_hand_joint": 25.0,
             },
             velocity_limit_sim={
                 ".*_shoulder_pitch_joint": 37.0,
@@ -181,4 +185,5 @@ for a in S3_CYLINDER_CFG.actuators.values():
         s = {n: s for n in names}
     for n in names:
         if n in e and n in s and s[n]:
-            S3_ACTION_SCALE[n] = 0.25 * e[n] / s[n]
+            # S3_ACTION_SCALE[n] = 0.25 * e[n] / s[n]
+            S3_ACTION_SCALE[n] = e[n] / s[n]
