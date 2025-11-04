@@ -181,7 +181,8 @@ class EventCfg:
         func=mdp.randomize_rigid_body_com,
         mode="startup",
         params={
-            "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
+            # "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
+            "asset_cfg": SceneEntityCfg("robot", body_names="base_link"),
             "com_range": {"x": (-0.025, 0.025), "y": (-0.05, 0.05), "z": (-0.05, 0.05)},
         },
     )
