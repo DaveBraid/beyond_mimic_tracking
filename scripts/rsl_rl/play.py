@@ -2,9 +2,14 @@
 
 # 可自定本地模型路径，以不使用wandb下载模型，加快速度
 # local_model_path = "logs/rsl_rl/g1_flat/2025-09-26_16-44-32_dance1_subject2_wo_est/model_5000.pt"
-local_motion_file = 'artifacts/fallAndGetUp2_subject2:v0/motion.npz'
+# local_motion_file = 'artifacts/s3_f2s2_trim_corrected:v0/motion.npz'
+# local_motion_file = 'artifacts/s3_f2s2_trim_1183:v0/motion.npz'
+local_motion_file = 'artifacts/s3_d1s2_trim:v0/motion.npz'
+
+checkpoint_path = '/home/ethanlee/project/BeyondMimic/beyond_mimic_tracking/logs/rsl_rl/s3_flat/2025-10-21_16-39-19_d1s2_wo_est/model_20000.pt'
 
 # python scripts/rsl_rl/play.py --task=Tracking-Flat-G1-Wo-State-Estimation-v0 --num_envs=2
+# python scripts/rsl_rl/play.py --task=Tracking-Flat-S3-Wo-State-Estimation-v0 --num_envs=2
 
 """Launch Isaac Sim Simulator first."""
 
@@ -113,7 +118,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     else:
         print(f"[INFO] Loading experiment from directory: {log_root_path}")
-        resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
+        # resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
+        resume_path = checkpoint_path
         env_cfg.commands.motion.motion_file = local_motion_file
         print(f"[INFO]: Loading model checkpoint from: {resume_path}")
 
