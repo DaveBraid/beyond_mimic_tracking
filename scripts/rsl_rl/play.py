@@ -1,15 +1,49 @@
 """Script to play a checkpoint if an RL agent from RSL-RL."""
 
-# 可自定本地模型路径，以不使用wandb下载模型，加快速度
-# local_model_path = "logs/rsl_rl/g1_flat/2025-09-26_16-44-32_dance1_subject2_wo_est/model_5000.pt"
-# local_motion_file = 'artifacts/s3_f2s2_trim_corrected:v0/motion.npz'
-# local_motion_file = 'artifacts/s3_f2s2_trim_1183:v0/motion.npz'
-local_motion_file = 'artifacts/s3_d1s2_trim:v0/motion.npz'
-
-checkpoint_path = '/home/ethanlee/project/BeyondMimic/beyond_mimic_tracking/logs/rsl_rl/s3_flat/2025-10-21_16-39-19_d1s2_wo_est/model_20000.pt'
-
 # python scripts/rsl_rl/play.py --task=Tracking-Flat-G1-Wo-State-Estimation-v0 --num_envs=2
 # python scripts/rsl_rl/play.py --task=Tracking-Flat-S3-Wo-State-Estimation-v0 --num_envs=2
+
+# ######################################################################
+# ############# 智能选择器 (V7) ########################################
+# ######################################################################
+# python scripts/rsl_rl/play.py
+
+'''
+成功模型收藏夹
+    s3_d1s2:
+        'logs/rsl_rl/s3_flat/2025-11-04_23-49-12_d1s2_wo_est_init_correct/model_20000.pt'
+'''
+
+# 导入并运行智能选择器
+# 这将在执行任何 Isaac Sim/Argparse 逻辑之前完成所有路径选择
+try:
+    from smart_selector import SmartPlaySelector
+
+    # 实例化并运行选择器
+    # (如果您的项目不需要动作文件，请设置 require_motion_file=False)
+    selector = SmartPlaySelector(require_motion_file=True, default_num_envs=2)
+    selector.run_selection_flow()
+
+    # 从选择器获取路径和配置
+    # (这些变量将在下面的原始脚本中使用)
+    local_motion_file = str(selector.selected_motion_file) if selector.selected_motion_file else None
+    checkpoint_path = str(selector.selected_checkpoint_file)
+    selected_task = selector.selected_task
+    selected_num_envs = selector.num_envs
+
+except ImportError:
+    print("错误：未找到 'smart_selector.py'。")
+    print("请确保 'smart_selector.py' 文件与 'play.py' 位于同一目录。")
+    import sys
+    sys.exit(1)
+except Exception as e:
+    print(f"智能选择器运行时发生错误: {e}")
+    import sys
+    sys.exit(1)
+
+# ######################################################################
+# ############# 原始脚本开始 ###########################################
+# ######################################################################
 
 """Launch Isaac Sim Simulator first."""
 
@@ -28,8 +62,8 @@ parser.add_argument("--video_length", type=int, default=200, help="Length of the
 parser.add_argument(
     "--disable_fabric", action="store_true", default=False, help="Disable fabric and use USD I/O operations."
 )
-parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
-parser.add_argument("--task", type=str, default=None, help="Name of the task.")
+parser.add_argument("--num_envs", type=int, default=selected_num_envs, help="Number of environments to simulate.")
+parser.add_argument("--task", type=str, default=selected_task, help="Name of the task.")
 parser.add_argument("--motion_file", type=str, default=None, help="Path to the motion file.")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
@@ -146,6 +180,29 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(env)
+
+    # VVVVVV 在这里添加你的打印代码 VVVVVV
+    
+    print("\n\n" + "="*50)
+    print("JOINT ORDER (FOR OBS AND ACTION)")
+    print("="*50)
+    
+    # 从 env wrapper 中获取原始的 Isaac Lab 环境
+    unwrapped_env = env.unwrapped 
+    
+    # 机器人资产的 'data.joint_names' 是 obs 和 action 的“单一事实来源”
+    # 因为 action_cfg.py 中使用了 ".*" 来匹配所有关节
+    joint_order_list = unwrapped_env.scene["robot"].data.joint_names
+    
+    print(f"Total Joints: {len(joint_order_list)}")
+    print("Joint Order (from robot.data.joint_names):")
+    
+    # 打印列表，方便复制
+    print(joint_order_list)
+    
+    print("="*50 + "\n\n")
+    
+    # ^^^^^^ 在这里添加你的打印代码 ^^^^^^
 
     # load previously trained model
     ppo_runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
