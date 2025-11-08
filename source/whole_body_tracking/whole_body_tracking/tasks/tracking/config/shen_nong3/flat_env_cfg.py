@@ -2,11 +2,11 @@ from isaaclab.utils import configclass
 
 from whole_body_tracking.robots.shen_nong3 import S3_ACTION_SCALE, S3_CYLINDER_CFG
 from whole_body_tracking.tasks.tracking.config.shen_nong3.agents.rsl_rl_ppo_cfg import LOW_FREQ_SCALE
-from whole_body_tracking.tasks.tracking.tracking_env_cfg import TrackingEnvCfg
+from whole_body_tracking.tasks.tracking.tracking_env_cfg_s3 import TrackingEnvCfgS3
 
 
 @configclass
-class S3FlatEnvCfg(TrackingEnvCfg):
+class S3FlatEnvCfg(TrackingEnvCfgS3):
     def __post_init__(self):
         super().__post_init__()
 

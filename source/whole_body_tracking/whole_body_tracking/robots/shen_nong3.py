@@ -63,7 +63,8 @@ S3_CYLINDER_CFG = ArticulationCfg(
         },
         joint_vel={".*": 0.0},
     ),
-    soft_joint_pos_limit_factor=0.9,
+    # soft_joint_pos_limit_factor=0.9,  # 关节软限位
+    soft_joint_pos_limit_factor=0.99,  # 关节软限位
     actuators={
         "legs": ImplicitActuatorCfg(
             joint_names_expr=[
