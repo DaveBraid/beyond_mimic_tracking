@@ -91,3 +91,56 @@ def randomize_rigid_body_com(
 
     # Set the new coms
     asset.root_physx_view.set_coms(coms, env_ids)
+
+
+def randomize_dof_armature(
+    env: ManagerBasedEnv,
+    env_ids: torch.Tensor | None,
+    asset_cfg: SceneEntityCfg,
+    armature_distribution_params: tuple[float, float],
+    operation: Literal["add", "scale", "abs"] = "add",
+    distribution: Literal["uniform", "log_uniform", "gaussian"] = "uniform",
+):
+    '''
+    随机化指定DOF的armature值, 以在不测定电枢时进行to real.
+    '''
+
+    # 提取资产品 (to enable type-hinting)
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    # 解析环境ID
+    if env_ids is None:
+        env_ids = torch.arange(env.scene.num_envs, device=asset.device)
+
+    # 解析关节ID
+    if asset_cfg.joint_ids == slice(None):
+        joint_ids = slice(None)  # for optimization purposes  优化：使用切片
+    else:
+        joint_ids = torch.tensor(asset_cfg.joint_ids, dtype=torch.int, device=asset.device)
+
+    if armature_distribution_params is not None:
+        # 获取当前的armature值
+        arma_data = asset.data.default_joint_armature.clone()  # (num_envs, num_dofs)
+
+        # 存储标称值以供导出
+        if not hasattr(asset.data, "default_dof_armature_nominal"):
+            asset.data.default_dof_armature_nominal = arma_data[0].clone()
+
+        randomize_arma = _randomize_prop_by_op(
+            arma_data,
+            armature_distribution_params,
+            env_ids,
+            joint_ids,
+            operation=operation,
+            distribution=distribution,
+        )[env_ids][:, joint_ids]
+
+        # 更新字典属性
+        # if env_ids != slice(None) and joint_ids != slice(None):
+        #     env_ids = env_ids[:, None]
+        asset.write_joint_armature_to_sim(randomize_arma, joint_ids, env_ids)
+
+
+    print(f"[Info] Randomized DOF armature for asset '{asset_cfg.name}' on envs {env_ids} and joints {joint_ids}.")
+    print(f"[Debug] Randomized armature values: {asset.data.joint_armature}")
+
