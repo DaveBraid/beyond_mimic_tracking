@@ -36,6 +36,16 @@ VELOCITY_RANGE = {
     "yaw": (-0.78, 0.78),
 }
 
+# 新增：困难模式的范围
+HARD_VELOCITY_RANGE = {
+    "x": (-1.5, 1.5),    # 增大 xyz 方向推力
+    "y": (-1.5, 1.5),    
+    "z": (-0.5, 0.5),
+    "roll": (-1.0, 1.0), # 增大旋转推力
+    "pitch": (-1.0, 1.0),
+    "yaw": (-1.5, 1.5),
+}
+
 
 @configclass
 class MySceneCfg(InteractiveSceneCfg):
@@ -189,11 +199,11 @@ class EventCfg:
 
     add_dof_armature = EventTerm(  # 起身禁用
         func=mdp.randomize_dof_armature,
-        mode="startup",  # 环境初始化时执行(启动/重置)
+        # 重要：将 mode 改为 "reset"，这样每次环境重置时都会重新随机化。startup 只会在仿真创建环境时调用一次
+        mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=[".*"]),  # 作用于机器人的所有关节
-            # "armature_distribution_params": (0.7, 1.3),  # "加大随机化!"
-            "armature_distribution_params": (0.5, 2.0),  # "加大随机化!"
+            "armature_distribution_params": (1.0, 1.0),  # 刚开始学习时不启用随机化
             "operation": "scale",  # 缩放
             "distribution": "uniform",  # 均匀分布
         },
@@ -314,8 +324,23 @@ class TerminationsCfg:
 @configclass
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
+    # 添加 Armature 课程
+    enable_armature_randomization = mdp.CurriculumTermCfg(
+        func=mdp.gate_dof_armature_by_episode_length,
+        params={
+            "target_mean_len": 500.0,      # 触发阈值
+            "active_range": (0.5, 2.0),    # 触发后的目标随机化参数
+        },
+    )
 
-    pass
+    # 新增：推力课程
+    increase_push_velocity = mdp.CurriculumTermCfg(
+        func=mdp.gate_push_velocity_by_episode_length,
+        params={
+            "target_mean_len": 500.0,      # 同样是 500 分触发
+            "new_velocity_range": HARD_VELOCITY_RANGE, # 传入新的字典
+        },
+    )
 
 
 ##
