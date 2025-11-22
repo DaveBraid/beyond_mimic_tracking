@@ -187,12 +187,13 @@ class EventCfg:
         },
     )
 
-    add_dof_armature = EventTerm(
+    add_dof_armature = EventTerm(  # 起身禁用
         func=mdp.randomize_dof_armature,
         mode="startup",  # 环境初始化时执行(启动/重置)
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=[".*"]),  # 作用于机器人的所有关节
-            "armature_distribution_params": (0.7, 1.3),  # "加大随机化!"
+            # "armature_distribution_params": (0.7, 1.3),  # "加大随机化!"
+            "armature_distribution_params": (0.5, 2.0),  # "加大随机化!"
             "operation": "scale",  # 缩放
             "distribution": "uniform",  # 均匀分布
         },
@@ -245,7 +246,9 @@ class RewardsCfg:
     
     # 该函数计算的是 “当前时间步的动作” 与 “上一个时间步的动作” 之间差值的L2范数的平方。就是限制其变化不能过快
     # 可以减少抖动、保护硬件、提升稳定性
-    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-1)  
+    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-1)  # Mimic原始参数 
+    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1.0)  # 实物部署时加大惩罚力度
+    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.5)  # 实物部署时加大惩罚力度
 
     joint_limit = RewTerm(
         func=mdp.joint_pos_limits,
@@ -254,14 +257,14 @@ class RewardsCfg:
     )
     undesired_contacts = RewTerm(
         func=mdp.undesired_contacts,
-        # weight=-0.1,
-        weight=0.0,  # 训练起身时暂时停用
+        weight=-0.1,
+        # weight=0.0,  # 训练起身时暂时停用
         params={
             "sensor_cfg": SceneEntityCfg(
                 "contact_forces",
                 body_names=[
                     # r"^(?!left_ankle_roll_link$)(?!right_ankle_roll_link$)(?!left_wrist_yaw_link$)(?!right_wrist_yaw_link$).+$"  # G1
-                    r"^(?!left_foot_roll_link$)(?!right_foot_roll_link$)(?!left_hand_link$)(?!right_hand_link$)(?!left_knee_link$)(?!right_knee_link$).+$"  # S3
+                    r"^(?!left_foot_roll_link$)(?!right_foot_roll_link$)(?!left_hand_link$)(?!right_hand_link$)(?!left_hip_pitch_link)(?!right_hip_pitch_link).+$"  # S3
                 ],
             ),
             "threshold": 1.0,
@@ -297,13 +300,12 @@ class TerminationsCfg:
         func=mdp.bad_motion_body_pos_z_only,
         params={
             "command_name": "motion",
-            # "threshold": 0.25,
             "threshold": 0.5,
             "body_names": [
                 "left_foot_roll_link",
                 "right_foot_roll_link",
-                # "left_hand_link",  # 起身训练时暂时不考虑手的位置
-                # "right_hand_link",  # 起身训练时暂时不考虑手的位置
+                "left_hand_link",  # 起身训练时暂时不考虑手的位置
+                "right_hand_link",  # 起身训练时暂时不考虑手的位置
             ],
         },
     )
