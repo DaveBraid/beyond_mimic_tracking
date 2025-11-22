@@ -119,6 +119,18 @@ python scripts/rsl_rl/train.py --task=Tracking-Flat-G1-Wo-State-Estimation-v0 \
 --headless --logger wandb --log_project_name BeyondMimic --run_name dance1_subject2_wo_est
 ```
 
+- Resume training command:
+
+  - 在原训练命令基础上添加以下参数：
+  - `--resume True`
+  - `--load_run <previous_run_directory_name> `（例如 `--load_run 2025-11-08_12-00-00_d1s2_wo_est_init_rand_arma`）
+  - `--checkpoint <checkpoint_file>` （例如 `--checkpoint model_20000.pt`）
+
+```bash
+# example (without estimation)
+python scripts/rsl_rl/train.py --task=Tracking-Flat-S3-Wo-State-Estimation-v0 --registry_name ethanlee-hust-org/wandb-registry-motions/s3_d1s2_trim --headless --logger wandb --log_project_name BeyondMimic_S3 --run_name <new_run_name> --resume True --load_run <previous_run_name> --checkpoint <checkpoint_file> --max_iterations <new_max_iterations>
+```
+
 ### Policy Evaluation
 
 - Play the trained policy by the following command:
