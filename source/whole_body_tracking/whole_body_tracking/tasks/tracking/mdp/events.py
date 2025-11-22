@@ -139,8 +139,3 @@ def randomize_dof_armature(
         # if env_ids != slice(None) and joint_ids != slice(None):
         #     env_ids = env_ids[:, None]
         asset.write_joint_armature_to_sim(randomize_arma, joint_ids, env_ids)
-
-
-    print(f"[Info] Randomized DOF armature for asset '{asset_cfg.name}' on envs {env_ids} and joints {joint_ids}.")
-    print(f"[Debug] Randomized armature values: {asset.data.joint_armature}")
-
