@@ -9,6 +9,10 @@
 
 """Launch Isaac Sim Simulator first."""
 
+# TODO：坐标系有问题，需要修正
+# [ 6.60749376e-01  4.93734032e-02  1.73470024e-02 -7.48779953e-01] 目前的
+# [1, 0, 0, 0] 正确的
+
 import argparse
 import numpy as np
 

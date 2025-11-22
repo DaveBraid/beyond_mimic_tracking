@@ -1,7 +1,6 @@
 """Script to play a checkpoint if an RL agent from RSL-RL."""
 
 # python scripts/rsl_rl/play.py --task=Tracking-Flat-G1-Wo-State-Estimation-v0 --num_envs=2
-# python scripts/rsl_rl/play.py --task=Tracking-Flat-S3-Wo-State-Estimation-v0 --num_envs=2
 
 # ######################################################################
 # ############# 智能选择器 (V7) ########################################
