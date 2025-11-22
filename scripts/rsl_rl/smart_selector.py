@@ -1,9 +1,16 @@
 """
-RSL-RL 智能选择器模块 (V8 - 快速启动版)
-这是一个可重用的类，为 play.py 脚本提供交互式菜单选择功能。
+RSL-RL 智能选择器模块 (V9 - 历史模型版)
+在手动选择流程中，增加 "自动选择最新" 或 "手动选择历史模型" 的选项。
 
-(新) 增加 "快速启动" 选项，自动加载最新的检查点，
-并反向推断任务，跳过日期/时间选择。
+特性:
+1. "快速启动" 保持不变 (自动加载全局最新模型)。
+2. "手动选择" 流程在选定 Time/Run 目录后：
+    a. 显示该目录下的 "最新模型" (推荐)。
+    b. 提供 "手动选择历史模型" 选项。
+3. 封装为 `SmartPlaySelector` 类，可通过 `require_motion_file` 参数配置。
+4. 自动过滤动作文件，只显示每个动作的最新 ':vN' 版本。
+5. 在选择日期时提供 'run_name' 预览。
+6. 使用 `simple-term-menu` 提供交互式光标菜单。
 """
 
 import os
@@ -56,11 +63,9 @@ class SmartPlaySelector:
             "Tracking-Flat-WalkBox-Humanoid-v0": "humanoid_flat",
         }
         
-        # (新) 反向映射，用于 "快速启动"
         self.REVERSE_LOG_MAP = {}
         self._build_reverse_log_map()
         
-        # (新) 存储最新检查点信息
         self.latest_checkpoint_info: tuple[Path, str] | None = None # (path, log_dir_name)
         self._find_latest_checkpoint()
 
@@ -71,7 +76,7 @@ class SmartPlaySelector:
         self.num_envs: int = self.default_num_envs
         self.logs_base_dir: Path = None 
 
-    # --- (新) 快速启动辅助函数 ---
+    # --- 快速启动辅助函数 ---
 
     def _build_reverse_log_map(self):
         """
@@ -84,7 +89,7 @@ class SmartPlaySelector:
 
     def _find_latest_checkpoint(self):
         """
-        (新) 扫描 *所有* 日志目录，找到修改时间最新的 'model_*.pt' 文件。
+        扫描 *所有* 日志目录，找到修改时间最新的 'model_*.pt' 文件。
         """
         log_root = self.project_root / "logs" / "rsl_rl"
         if not log_root.exists():
@@ -93,20 +98,16 @@ class SmartPlaySelector:
 
         print(f"正在扫描 {log_root.relative_to(self.project_root)} 以查找最新模型...")
         
-        # 递归搜索所有 model_*.pt 文件
         all_models = list(log_root.rglob("model_*.pt"))
         if not all_models:
             print("[信息] 未找到任何模型文件。")
             return
             
-        # 找到修改时间最新的文件
         latest_file = max(all_models, key=os.path.getmtime)
         
-        # 推断它属于哪个日志目录 (例如 'g1_flat', 's3_flat')
         latest_path_str = str(latest_file)
         inferred_log_dir = None
         for log_dir_name in self.REVERSE_LOG_MAP.keys():
-            # 使用 os.path.sep 确保跨平台兼容性 ( / 或 \ )
             if f"{os.path.sep}{log_dir_name}{os.path.sep}" in latest_path_str:
                 inferred_log_dir = log_dir_name
                 break
@@ -129,11 +130,11 @@ class SmartPlaySelector:
     def _get_display_name(self, option: str | Path) -> str:
         """辅助函数：获取选项的显示名称。"""
         if isinstance(option, Path) and option.name == 'motion.npz':
-            return option.parent.name # 例如: 's3_f2s2_800:v0'
+            return option.parent.name
         elif isinstance(option, Path):
-            return option.name # 例如: 'model_1000.pt' 或 '2025-11-06_...'
+            return option.name
         else:
-            return str(option) # 例如: '2025-11-06' 或 'Tracking-Flat-S3-v0'
+            return str(option)
 
     def _interactive_menu(self, 
                           title: str, 
@@ -185,6 +186,8 @@ class SmartPlaySelector:
         print(f"您选择了: {display_options[menu_entry_index]}")
         return selected_option
 
+    # --- 流程步骤 ---
+
     def _select_task(self, title: str, task_list: list = None):
         """第 1 步：选择任务"""
         if task_list is None:
@@ -229,8 +232,9 @@ class SmartPlaySelector:
         )
 
     def _select_checkpoint_path_manual(self):
-        """(手动流程) 第 3 & 4 步：选择日期和时间，然后自动查找最新模型。"""
+        """(手动流程) 第 3, 4, 5 步：选择日期、时间和模型。"""
         
+        # --- 步骤 3: 确定和选择日期 (带预览) ---
         log_dir_name = self.TASK_LOG_MAP.get(self.selected_task, "g1_flat")
         self.logs_base_dir = self.project_root / "logs" / "rsl_rl" / log_dir_name
 
@@ -266,20 +270,48 @@ class SmartPlaySelector:
             display_strings=display_list
         )
 
+        # --- 步骤 4: 选择时间/运行 ---
         time_dirs = [d for d in all_run_dirs if d.name.startswith(str(selected_date))]
         sorted_time_dirs = sorted(time_dirs, key=lambda p: p.name, reverse=True)
         selected_run_dir = self._interactive_menu("第 4 步 (手动)：选择时间/运行 (TIME/RUN)", sorted_time_dirs)
 
+        # --- (新) 步骤 5: 选择模型 (自动或手动) ---
         checkpoint_paths = list(selected_run_dir.glob("model_*.pt"))
         if not checkpoint_paths:
             print(f"错误：在目录 '{selected_run_dir.name}' 中未找到任何 'model_*.pt' 文件。")
             sys.exit(1)
         
         sorted_checkpoints = sorted(checkpoint_paths, key=self._get_model_num, reverse=True)
-        self.selected_checkpoint_file = sorted_checkpoints[0]
+        latest_model = sorted_checkpoints[0]
         
-        print(f"\n已自动选择最新检查点: {self.selected_checkpoint_file.name}")
+        # 定义此步骤的选项
+        MANUAL_SELECT_ID = "MANUAL_SELECT" # 用一个唯一的ID来标识手动选择
+        options_list_step5 = [
+            latest_model, # 选项1: 路径对象
+            MANUAL_SELECT_ID # 选项2: 字符串ID
+        ]
+        display_list_step5 = [
+            f"[ 自动选择最新 ] {latest_model.name}",
+            f"[ 手动选择 ] ...从 {len(sorted_checkpoints)} 个历史模型中选择"
+        ]
+        
+        choice = self._interactive_menu(
+            "第 5 步 (手动)：选择模型",
+            options_list_step5,
+            display_strings=display_list_step5
+        )
 
+        if choice == MANUAL_SELECT_ID:
+            # 如果用户选择“手动”，则显示所有模型的列表
+            self.selected_checkpoint_file = self._interactive_menu(
+                f"第 5b 步：选择一个历史模型 (在 {selected_run_dir.name} 中)",
+                sorted_checkpoints
+            )
+        else:
+            # 否则，用户选择了 "自动选择最新" (即 latest_model 路径对象)
+            self.selected_checkpoint_file = latest_model
+            # (选择信息已在 _interactive_menu 中打印)
+        
     def _select_num_envs(self):
         """最后一步：输入环境数量。"""
         print("\n" + "=" * 60)
@@ -306,7 +338,7 @@ class SmartPlaySelector:
         print(f"您选择了: {self.num_envs} 个环境")
 
     def run_selection_flow(self):
-        """(新) 运行完整的交互式选择流程，包含 "快速启动" 选项。"""
+        """运行完整的交互式选择流程，包含 "快速启动" 选项。"""
         
         # --- 第 0 步：选择启动模式 ---
         options = ["[ 手动选择 ] 手动选择任务、日期..."]
@@ -331,7 +363,6 @@ class SmartPlaySelector:
             path, log_dir = self.latest_checkpoint_info
             self.selected_checkpoint_file = path
             
-            # 反向推断可能的任务
             possible_tasks = self.REVERSE_LOG_MAP.get(log_dir, self.TASKS)
             
             self._select_task(
@@ -345,7 +376,7 @@ class SmartPlaySelector:
             # --- 手动选择流程 ---
             self._select_task(title="第 1 步 (手动)：选择一个任务 (TASK)")
             self._select_motion_file()
-            self._select_checkpoint_path_manual() # (原 _select_checkpoint_path)
+            self._select_checkpoint_path_manual() # (已更新为包含步骤 5)
             self._select_num_envs()
         
         # --- 结束，打印总结 ---
@@ -364,17 +395,11 @@ if __name__ == "__main__":
     
     print("--- [测试模式] 正在运行 SmartPlaySelector ---")
     
-    # 测试带动作文件的选择
     selector = SmartPlaySelector(require_motion_file=True)
     selector.run_selection_flow()
-
-    local_motion_file = str(selector.selected_motion_file) if selector.selected_motion_file else None
-    checkpoint_path = str(selector.selected_checkpoint_file)
-    selected_task = selector.selected_task
-    selected_num_envs = selector.num_envs
     
     print("\n--- [测试模式] 选择结果 ---")
-    print(f"Task: {selected_task}")
-    print(f"Motion File: {local_motion_file}")
-    print(f"Checkpoint File: {checkpoint_path}")
-    print(f"Num Envs: {selected_num_envs}")
+    print(f"Task: {selector.selected_task}")
+    print(f"Motion File: {selector.selected_motion_file}")
+    print(f"Checkpoint File: {selector.selected_checkpoint_file}")
+    print(f"Num Envs: {selector.num_envs}")
