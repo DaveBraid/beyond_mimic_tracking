@@ -76,6 +76,8 @@ if args_cli.video:
 # clear out sys.argv for Hydra
 sys.argv = [sys.argv[0]] + hydra_args
 
+# args_cli.livestream = 2       # 强制开启 WebRTC 直播 (1=Native, 2=WebRTC)
+
 # launch omniverse app
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
