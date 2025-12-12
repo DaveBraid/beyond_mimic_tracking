@@ -52,8 +52,8 @@ S3_CYLINDER_CFG = ArticulationCfg(
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.00, 0.00, 0.95),  # 用于站立训练
         # pos=(0.00, 0.00, 0.20),  # 用于起身训练
-        # rot=(0.707, 0.00, 0.707, 0.00),  # 面朝下躺在地上，用于训练起身
-        # rot=(0.707, 0.00, -0.707, 0.00),  # 面朝上躺在地上，用于训练起身
+        # rot=(0.707, 0.00, 0.707, 0.00),  # 面朝下躺在地上
+        # rot=(0.707, 0.00, -0.707, 0.00),  # 面朝上躺在地上
         joint_pos={
             ".*_hip_pitch_joint": -0.22,
             ".*_knee_joint": 0.56,
@@ -108,8 +108,19 @@ S3_CYLINDER_CFG = ArticulationCfg(
             effort_limit_sim=300.0,
             velocity_limit_sim=37.0,
             joint_names_expr=[".*_foot_pitch_joint", ".*_foot_roll_joint"],
-            stiffness=2.0 * STIFFNESS_5020,
-            damping=2.0 * DAMPING_5020,
+            # stiffness=2.0 * STIFFNESS_5020,
+            # damping=2.0 * DAMPING_5020,
+            # armature=2.0 * ARMATURE_5020,
+
+            # 踝关节只能35-1.5，12-0.3，否则可能效果不好
+            stiffness={
+                '*_foot_pitch_joint': 35.0,
+                '*_foot_roll_joint': 12.0,
+            },
+            damping={
+                '*_foot_pitch_joint': 1.5,
+                '*_foot_roll_joint': 0.3,
+            },
             armature=2.0 * ARMATURE_5020,
         ),
         # "waist": ImplicitActuatorCfg(
