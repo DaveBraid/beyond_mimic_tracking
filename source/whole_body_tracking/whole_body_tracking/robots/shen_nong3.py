@@ -114,12 +114,12 @@ S3_CYLINDER_CFG = ArticulationCfg(
 
             # 踝关节只能35-1.5，12-0.3，否则可能效果不好
             stiffness={
-                '*_foot_pitch_joint': 35.0,
-                '*_foot_roll_joint': 12.0,
+                '.*_foot_pitch_joint': 35.0,
+                '.*_foot_roll_joint': 12.0,
             },
             damping={
-                '*_foot_pitch_joint': 1.5,
-                '*_foot_roll_joint': 0.3,
+                '.*_foot_pitch_joint': 1.5,
+                '.*_foot_roll_joint': 0.3,
             },
             armature=2.0 * ARMATURE_5020,
         ),
