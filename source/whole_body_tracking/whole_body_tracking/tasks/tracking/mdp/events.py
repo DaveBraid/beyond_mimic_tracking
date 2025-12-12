@@ -139,3 +139,70 @@ def randomize_dof_armature(
         # if env_ids != slice(None) and joint_ids != slice(None):
         #     env_ids = env_ids[:, None]
         asset.write_joint_armature_to_sim(randomize_arma, joint_ids, env_ids)
+
+
+def randomize_actuator_gains(
+    env: ManagerBasedEnv,
+    env_ids: torch.Tensor | None,
+    asset_cfg: SceneEntityCfg,
+    stiffness_distribution_params: tuple[float, float] | None = None,
+    damping_distribution_params: tuple[float, float] | None = None,
+    operation: Literal["add", "scale", "abs"] = "scale",
+    distribution: Literal["uniform", "log_uniform", "gaussian"] = "uniform",
+):
+    """Randomize the actuator gains (stiffness and damping)."""
+    # extract the used quantities (to enable type-hinting)
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    # resolve environment ids
+    if env_ids is None:
+        env_ids = torch.arange(env.scene.num_envs, device=asset.device)
+
+    # resolve joint indices
+    if asset_cfg.joint_ids == slice(None):
+        joint_ids = slice(None)
+    else:
+        joint_ids = torch.tensor(asset_cfg.joint_ids, dtype=torch.int, device=asset.device)
+
+    # -- Stiffness (Kp)
+    if stiffness_distribution_params is not None:
+        # get nominal values
+        stiffness = asset.data.default_stiffness.clone()
+        # save nominal value for export
+        if not hasattr(asset.data, "default_stiffness_nominal"):
+            asset.data.default_stiffness_nominal = stiffness[0].clone()
+            
+        # randomize
+        stiffness = _randomize_prop_by_op(
+            stiffness,
+            stiffness_distribution_params,
+            env_ids,
+            joint_ids,
+            operation=operation,
+            distribution=distribution,
+        )[env_ids][:, joint_ids]
+        
+        # apply
+        asset.write_joint_stiffness_to_sim(stiffness, joint_ids, env_ids)
+
+    # -- Damping (Kd)
+    if damping_distribution_params is not None:
+        # get nominal values
+        damping = asset.data.default_damping.clone()
+        # save nominal value for export
+        if not hasattr(asset.data, "default_damping_nominal"):
+            asset.data.default_damping_nominal = damping[0].clone()
+
+        # randomize
+        damping = _randomize_prop_by_op(
+            damping,
+            damping_distribution_params,
+            env_ids,
+            joint_ids,
+            operation=operation,
+            distribution=distribution,
+        )[env_ids][:, joint_ids]
+        
+        # apply
+        asset.write_joint_damping_to_sim(damping, joint_ids, env_ids)
+

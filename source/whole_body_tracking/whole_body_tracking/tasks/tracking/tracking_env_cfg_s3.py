@@ -40,10 +40,10 @@ VELOCITY_RANGE = {
 HARD_VELOCITY_RANGE = {
     "x": (-1.5, 1.5),    # 增大 xyz 方向推力
     "y": (-1.5, 1.5),    
-    "z": (-0.5, 0.5),
-    "roll": (-1.0, 1.0), # 增大旋转推力
-    "pitch": (-1.0, 1.0),
-    "yaw": (-1.5, 1.5),
+    "z": (-0.8, 0.8),
+    "roll": (-1.5, 1.5), # 增大旋转推力
+    "pitch": (-1.5, 1.5),
+    "yaw": (-2.0, 2.0),
 }
 
 
@@ -170,10 +170,13 @@ class EventCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "static_friction_range": (0.3, 1.6),
-            "dynamic_friction_range": (0.3, 1.2),
+            # "static_friction_range": (0.3, 1.6),
+            "static_friction_range": (0.1, 2.2),  # 加大随机化
+            # "dynamic_friction_range": (0.3, 1.2),
+            "dynamic_friction_range": (0.05, 1.6),  # 加大随机化
             "restitution_range": (0.0, 0.5),
-            "num_buckets": 64,
+            # "num_buckets": 64,
+            "num_buckets": 128,  # 加大随机化
         },
     )
 
@@ -206,6 +209,19 @@ class EventCfg:
             "armature_distribution_params": (1.0, 1.0),  # 刚开始学习时不启用随机化
             "operation": "scale",  # 缩放
             "distribution": "uniform",  # 均匀分布
+        },
+    )
+
+    # Kp, Kd 随机化
+    randomize_gains = EventTerm(
+        func=mdp.randomize_actuator_gains,
+        mode="reset",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", joint_names=[".*"]),
+            "stiffness_distribution_params": (0.9, 1.1),
+            "damping_distribution_params": (0.9, 1.1),
+            "operation": "scale",
+            "distribution": "uniform",
         },
     )
 
@@ -339,6 +355,7 @@ class CurriculumCfg:
         params={
             "target_mean_len": 500.0,      # 同样是 500 分触发
             "new_velocity_range": HARD_VELOCITY_RANGE, # 传入新的字典
+            "new_interval_range_s": (0.5, 1.0),        # 增加触发频率
         },
     )
 
