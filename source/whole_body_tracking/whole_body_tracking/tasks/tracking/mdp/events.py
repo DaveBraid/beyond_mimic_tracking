@@ -167,11 +167,14 @@ def randomize_actuator_gains(
     # -- Stiffness (Kp)
     if stiffness_distribution_params is not None:
         # get nominal values
-        stiffness = asset.data.default_stiffness.clone()
+        # stiffness = asset.data.default_stiffness.clone()
         # save nominal value for export
         if not hasattr(asset.data, "default_stiffness_nominal"):
-            asset.data.default_stiffness_nominal = stiffness[0].clone()
-            
+            asset.data.default_stiffness_nominal = asset.data.joint_stiffness[0].clone()
+        
+        stiffness = asset.data.joint_stiffness.clone()
+        stiffness[env_ids] = asset.data.default_stiffness_nominal
+
         # randomize
         stiffness = _randomize_prop_by_op(
             stiffness,
@@ -188,10 +191,13 @@ def randomize_actuator_gains(
     # -- Damping (Kd)
     if damping_distribution_params is not None:
         # get nominal values
-        damping = asset.data.default_damping.clone()
+        # damping = asset.data.default_damping.clone()
         # save nominal value for export
         if not hasattr(asset.data, "default_damping_nominal"):
-            asset.data.default_damping_nominal = damping[0].clone()
+            asset.data.default_damping_nominal = asset.data.joint_damping[0].clone()
+
+        damping = asset.data.joint_damping.clone()
+        damping[env_ids] = asset.data.default_damping_nominal
 
         # randomize
         damping = _randomize_prop_by_op(
