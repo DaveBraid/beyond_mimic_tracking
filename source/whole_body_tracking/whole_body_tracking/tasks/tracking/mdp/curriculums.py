@@ -63,10 +63,11 @@ def gate_push_velocity_by_episode_length(
     env: ManagerBasedRLEnv, 
     env_ids: torch.Tensor, 
     target_mean_len: float, 
-    new_velocity_range: dict[str, tuple[float, float]]
+    new_velocity_range: dict[str, tuple[float, float]],
+    new_interval_range_s: tuple[float, float]
 ):
     """
-    当平均回合长度达到阈值时，增大推力随机化范围。
+    当平均回合长度达到阈值时，增大触发频率和推力随机化范围。
     """
     if not hasattr(env, "curriculum_tracker"):
         env.curriculum_tracker = {
@@ -96,6 +97,7 @@ def gate_push_velocity_by_episode_length(
         try:
             event_term = env.event_manager._terms["push_robot"]
             event_term.cfg.params["velocity_range"] = new_velocity_range
+            event_term.cfg.interval_range_s = new_interval_range_s
             
             if "triggered_events" not in tracker: tracker["triggered_events"] = set()
             tracker["triggered_events"].add("push_increase")
