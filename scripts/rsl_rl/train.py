@@ -58,7 +58,25 @@ from isaaclab.envs import (
     multi_agent_to_single_agent,
 )
 from isaaclab.utils.dict import print_dict
-from isaaclab.utils.io import dump_pickle, dump_yaml
+
+# from isaaclab.utils.io import dump_pickle, dump_yaml
+# 因为在新版本的 IsaacLab (或其底层依赖更新后) 中，isaaclab.utils.io 模块似乎发生了一些重构，
+# 不再直接暴露 dump_pickle 和 dump_yaml 这两个工具函数。
+import pickle
+import yaml
+
+def dump_pickle(filename, data):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, "wb") as f:
+        pickle.dump(data, f)
+
+def dump_yaml(filename, data):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    if hasattr(data, "to_dict"):
+        data = data.to_dict()
+    with open(filename, "w") as f:
+        yaml.dump(data, f, default_flow_style=False)
+
 from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper
 from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
