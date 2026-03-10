@@ -196,7 +196,7 @@ class EventCfg:
         params={
             # "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
             "asset_cfg": SceneEntityCfg("robot", body_names="base_link"),
-            "com_range": {"x": (-0.025, 0.025), "y": (-0.05, 0.05), "z": (-0.05, 0.05)},
+            "com_range": {"x": (-0.025, 0.025), "y": (-0.05, 0.05), "z": (-0.05, 0.05)},  # 可以考虑加大  # TODO
         },
     )
 
@@ -218,8 +218,8 @@ class EventCfg:
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=[".*"]),
-            "stiffness_distribution_params": (0.9, 1.1),
-            "damping_distribution_params": (0.9, 1.1),
+            "stiffness_distribution_params": (0.95, 1.05),
+            "damping_distribution_params": (0.95, 1.05),
             "operation": "scale",
             "distribution": "uniform",
         },
@@ -290,7 +290,8 @@ class RewardsCfg:
                 "contact_forces",
                 body_names=[
                     # r"^(?!left_ankle_roll_link$)(?!right_ankle_roll_link$)(?!left_wrist_yaw_link$)(?!right_wrist_yaw_link$).+$"  # G1
-                    r"^(?!left_foot_roll_link$)(?!right_foot_roll_link$)(?!left_hand_link$)(?!right_hand_link$)(?!left_hip_pitch_link)(?!right_hip_pitch_link).+$"  # S3
+                    # r"^(?!left_foot_roll_link$)(?!right_foot_roll_link$)(?!left_hand_link$)(?!right_hand_link$)(?!left_hip_pitch_link)(?!right_hip_pitch_link).+$"  # S3
+                    r"^(?!left_foot_roll_link$)(?!right_foot_roll_link$).+$"  # S3 站立舞蹈
                 ],
             ),
             "threshold": 1.0,
