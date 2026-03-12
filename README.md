@@ -100,6 +100,19 @@ python scripts/replay_npz.py --registry_name={your-organization}-org/wandb-regis
 python scripts/replay_npz.py --registry_name=ethanlee-hust-org/wandb-registry-motions/dance1_subject2
 ```
 
+- For remote WebRTC replay, use `--livestream 1`. In the current Isaac Lab versions used by this repo,
+  `--livestream 1` enables WebRTC for public / routed networks and implicitly enables headless mode, so
+  `--headless` is optional. If the client reaches the host through a virtual IP, VPN, or port forwarding,
+  set `PUBLIC_IP` to the address visible to the client:
+
+```bash
+PUBLIC_IP=10.1.1.253 python scripts/replay_npz_lrs.py \
+  --registry_name=ethanlee-hust-org/wandb-registry-motions/lrs_d1s2 \
+  --livestream 1
+```
+
+- If `PUBLIC_IP` is not set, Isaac Lab may fall back to `127.0.0.1`, which usually breaks remote WebRTC clients.
+
 - Debugging
     - Make sure to export WANDB_ENTITY to your organization name, not your personal username.
     - If /tmp folder is not accessible, modify csv_to_npz.py L319 & L326 to a temporary folder of your choice.
