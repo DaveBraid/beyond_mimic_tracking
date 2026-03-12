@@ -45,6 +45,9 @@ class SmartPlaySelector:
         
         # 预定义配置
         self.TASKS = [
+            "Tracking-Flat-LRS-Wo-State-Estimation-v0",
+            "Tracking-Flat-LRS-v0",
+            "Tracking-Flat-LRS-Low-Freq-v0",
             "Tracking-Flat-S3-Wo-State-Estimation-v0",
             "Tracking-Flat-G1-Wo-State-Estimation-v0",
             "Tracking-Flat-S3-v0",
@@ -54,6 +57,9 @@ class SmartPlaySelector:
             "Tracking-Flat-WalkBox-Humanoid-v0",
         ]
         self.TASK_LOG_MAP = {
+            "Tracking-Flat-LRS-Wo-State-Estimation-v0": "lrs_flat",
+            "Tracking-Flat-LRS-v0": "lrs_flat",
+            "Tracking-Flat-LRS-Low-Freq-v0": "lrs_flat",
             "Tracking-Flat-G1-Wo-State-Estimation-v0": "g1_flat",
             "Tracking-Flat-G1-v0": "g1_flat",
             "Tracking-Flat-S3-Wo-State-Estimation-v0": "s3_flat",
