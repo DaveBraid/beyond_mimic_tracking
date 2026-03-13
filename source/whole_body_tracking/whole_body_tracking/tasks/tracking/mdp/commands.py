@@ -38,6 +38,8 @@ class MotionLoader:
         self._body_quat_w = torch.tensor(data["body_quat_w"], dtype=torch.float32, device=device)
         self._body_lin_vel_w = torch.tensor(data["body_lin_vel_w"], dtype=torch.float32, device=device)
         self._body_ang_vel_w = torch.tensor(data["body_ang_vel_w"], dtype=torch.float32, device=device)
+        self.sim_body_names = data["sim_body_names"].tolist() if "sim_body_names" in data else None
+        self.sim_joint_names = data["sim_joint_names"].tolist() if "sim_joint_names" in data else None
         self._body_indexes = body_indexes
         self.time_step_total = self.joint_pos.shape[0]
 
@@ -72,6 +74,14 @@ class MotionCommand(CommandTerm):
         )
 
         self.motion = MotionLoader(self.cfg.motion_file, self.body_indexes, device=self.device)
+        if self.motion.sim_body_names is not None:
+            missing_body_names = [name for name in self.cfg.body_names if name not in self.motion.sim_body_names]
+            if missing_body_names:
+                raise ValueError(
+                    "Motion file body list is incompatible with the current robot/body config. "
+                    f"Missing bodies in motion file: {missing_body_names}. "
+                    "Please regenerate motion.npz / wandb artifact after changing the URDF body tree."
+                )
         self.time_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
         self.body_pos_relative_w = torch.zeros(self.num_envs, len(cfg.body_names), 3, device=self.device)
         self.body_quat_relative_w = torch.zeros(self.num_envs, len(cfg.body_names), 4, device=self.device)
