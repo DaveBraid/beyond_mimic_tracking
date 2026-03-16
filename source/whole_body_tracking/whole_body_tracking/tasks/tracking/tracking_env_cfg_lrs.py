@@ -233,7 +233,8 @@ class TerminationsCfg:
         func=mdp.bad_motion_body_pos_z_only,
         params={
             "command_name": "motion",
-            "threshold": 0.25,
+            # "threshold": 0.25,
+            "threshold": 0.40,
             "body_names": [
                 "left_ankle_roll_link",
                 "right_ankle_roll_link",
